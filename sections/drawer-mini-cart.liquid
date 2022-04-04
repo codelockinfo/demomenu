@@ -1,0 +1,23 @@
+{% render 'drawer-mini-cart' with show_section: section.settings.show_section, the_collection: section.settings.the_collection %}
+
+{% schema %}
+{
+    "name": {
+        "en": "Mini Cart"
+    },
+    "settings": [
+        {
+            "type": "checkbox",
+            "id": "show_section",
+            "label": "Show Mini Cart Upsells?",
+            "default": true
+        },
+        {
+            "type": "collection",
+            "id": "the_collection",
+            "label": "Collection",
+            "info": "Tip - Create a new collection referring all products and sort by Best Selling."
+        }
+    ]
+}
+{% endschema %}

@@ -1,0 +1,60 @@
+{%- liquid
+assign header_font = settings.heading_font
+assign body_font = settings.body_font
+
+assign header_font_bold = header_font | font_modify: 'weight', 'bold'
+assign header_font_italic = header_font | font_modify: 'style', 'italic'
+assign header_font_bold_italic = header_font_bold | font_modify: 'style', 'italic'
+
+assign body_font_bold = body_font | font_modify: 'weight', 'bold'
+assign body_font_italic = body_font | font_modify: 'style', 'italic'
+assign body_font_bold_italic = body_font_bold | font_modify: 'style', 'italic' -%}
+
+{% style %}
+{{ header_font | font_face: font_display: 'swap' }}
+{{ body_font | font_face: font_display: 'swap' }}
+
+{{ header_font_bold | font_face: font_display: 'swap' }}
+{{ header_font_italic | font_face: font_display: 'swap' }}
+{{ header_font_bold_italic | font_face: font_display: 'swap' }}
+
+{{ body_font_bold | font_face: font_display: 'swap' }}
+{{ body_font_italic | font_face: font_display: 'swap' }}
+{{ body_font_bold_italic | font_face: font_display: 'swap' }}
+
+@font-face {
+    font-family: 'Magnat Poster';
+    src: url({{ 'magnatposter-bold-webfont.woff2' | asset_url }}) format('woff2'),
+         url({{ 'magnatposter-bold-webfont.woff' | asset_url }}) format('woff');
+    font-weight: bold;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Magnat Poster';
+    src: url({{ 'magnatposter-bolditalic-webfont.woff2' | asset_url }}) format('woff2'),
+         url({{ 'magnatposter-bolditalic-webfont.woff' | asset_url }}) format('woff');
+    font-weight: bold;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Magnat Poster';
+    src: url({{ 'magnatposter-light-webfont.woff2' | asset_url }}) format('woff2'),
+         url({{ 'magnatposter-light-webfont.woff' | asset_url }}) format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Magnat Poster';
+    src: url({{ 'magnatposter-lightitalic-webfont.woff2' | asset_url }}) format('woff2'),
+         url({{ 'magnatposter-lightitalic-webfont.woff' | asset_url }}) format('woff');
+    font-weight: normal;
+    font-style: italic;
+    font-display: swap;
+}
+{% endstyle %}

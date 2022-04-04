@@ -1,0 +1,122 @@
+{%- liquid
+assign section_spacing = section.settings.section_spacing
+assign section_background = section.settings.section_background
+assign products_desktop = section.settings.products_desktop
+assign products_tablet = section.settings.products_tablet
+assign products_mobile = section.settings.products_mobile
+assign total_products = section.settings.total_products
+assign collection = collections[section.settings.collection] -%}
+
+<section class="{{ section_spacing }}" style="background-color: {{ section_background }};">
+  {% if section.settings.title != blank %}
+    <div class="{% if section.settings.contain %}container{% endif %} mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="[ w-full overflow-hidden ]">
+        <h2 class="mb-4 md:mb-10 text-base lg:text-xl "><a href="{{ collection.url }}">{{ section.settings.title | escape }}</a></h2>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="{% if section.settings.contain %}container{% endif %} mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="[ flex flex-no-wrap flex-row overflow-y-hidden overflow-x-auto ] scroll-bar">
+      {% for product in collection.products limit: total_products %}
+        <div {{ block.shopify_attributes }} class="[ relative w-7/10 md:w-4/10 lg:w-3/10 flex-shrink-0 overflow-hidden pr-4 mb-4 lg:mb-10 ]">
+          {% render 'product-grid-item' with product: product %}
+        </div>
+      {% else %}
+        {% for i in (1..6) %}
+          <a href="#">
+            {% capture current %}{% cycle 1, 2, 3, 4, 5, 6 %}{% endcapture %}
+            {{ 'product-' | append: current | placeholder_svg_tag: 'placeholder-svg placeholder-svg--small' }}
+            <p>
+              {{ 'homepage.onboarding.product_title' | t }}
+            </p>
+          </a>
+          <p>{{ 1999 | money }}</p>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+  {
+    "name": "Featured collection",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "contain",
+        "label": "Contain the Footer within a wrapper?",
+        "default": false
+      },
+      {
+        "type": "header",
+        "content": "Section Styling"
+      },
+      {
+        "type": "color",
+        "id": "section_background",
+        "label": "Background Color",
+        "default": "#FFFFFF"
+      },
+      {
+        "type": "select",
+        "id": "section_spacing",
+        "label": "Section Spacing",
+        "options": [
+          {
+            "value": "py-0",
+            "label": "None"
+          },
+          {
+            "value": "py-8",
+            "label": "Small"
+          },
+          {
+            "value": "py-16",
+            "label": "Medium"
+          },
+          {
+            "value": "py-32",
+            "label": "Large"
+          },
+          {
+            "value": "py-64",
+            "label": "x-Large"
+          }
+        ],
+        "default": "py-8"
+      },
+      {
+        "type": "header",
+        "content": "Section Settings"
+      },
+      {
+        "type": "text",
+        "id": "title",
+        "label": "Heading",
+        "default": "Featured collection"
+      },
+      {
+        "id": "collection",
+        "type": "collection",
+        "label": "Collection"
+      },
+      {
+        "type": "range",
+        "id": "total_products",
+        "label": "Total number of products",
+        "min": 4,
+        "max": 28,
+        "step": 1,
+        "default": 8
+      }
+    ],
+    "presets": [
+      {
+        "name": "Scrolling collection",
+        "category": "Collection"
+      }
+    ]
+  }
+
+{% endschema %}

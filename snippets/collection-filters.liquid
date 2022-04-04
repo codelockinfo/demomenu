@@ -1,0 +1,42 @@
+<section data-collection-filters aria-labelledby="filter-heading" class="sticky z-20 bg-white border-solid border-b border-color grid items-center">
+    <h2 id="filter-heading" class="sr-only">Filters</h2>
+    <div class="relative col-start-1 row-start-1 py-4">
+        <div class="{% if section.settings.contain %}container{% endif %} mx-auto flex justify-between items-center text-sm px-4 sm:px-6 lg:px-8">
+            <div>
+                <drawer-trigger data-target="[data-filters-drawer]" data-open-class="flex" data-close-class="hidden">
+                    <button type="button" class="group flex items-center heading" aria-controls="disclosure-1" aria-expanded="false">
+                        <svg class="mr-2" role="presentation" class="icon icon-filters" fill="currentColor" height="15" width="15" viewBox="0 0 448 512"><!--! Font Awesome Pro 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. --><path d="M0 88C0 83.58 3.582 80 8 80H440C444.4 80 448 83.58 448 88C448 92.42 444.4 96 440 96H8C3.582 96 0 92.42 0 88zM64 248C64 243.6 67.58 240 72 240H376C380.4 240 384 243.6 384 248C384 252.4 380.4 256 376 256H72C67.58 256 64 252.4 64 248zM280 416H168C163.6 416 160 412.4 160 408C160 403.6 163.6 400 168 400H280C284.4 400 288 403.6 288 408C288 412.4 284.4 416 280 416z"/></svg>
+                        Filters
+                    </button>
+                </drawer-trigger>
+            </div>
+            <div>
+                <div class="relative inline-block">
+                    <select data-sorting id="country" name="country" autocomplete="country" class="[ m-1 w-1/2 md:w-auto block bg-white border border-color p-2 lg:px-4 lg:py-3 pr-8 leading-tight focus:outline-none focus:shadow-outline box-content ml-auto min-w-min appearance-none rounded-none ]">
+                        <option selected disabled value="default">{{ 'collections.general.sort_by' | t }}</option>
+                    {%- for option in collection.sort_options -%}
+                        <option value="{{ option.value }}" {% if option.value == collection.sort_by %}selected{% endif %}>{{ option.name }}</option>
+                    {%- endfor -%}
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 px-2 flex items-center">
+                        <!-- Heroicon name: solid/chevron-down -->
+                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script type="text/javascript">
+    const fakeSorting = document.querySelector('[data-sorting]');
+    const sorting = document.querySelector('#sort_by');
+    const filterForm = document.querySelector('collection-filters-form > form');
+    
+    fakeSorting.addEventListener('change', function(e) {
+        sorting.value = e.currentTarget.value;
+        filterForm.dispatchEvent(new Event('input'));
+    });
+</script>

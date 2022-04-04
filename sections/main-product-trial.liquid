@@ -1,0 +1,935 @@
+{%- liquid
+
+assign current_variant = product.selected_or_first_available_variant
+assign size_guide = product.metafields.descriptors.size_guide
+
+assign current_selling_plan_allocation = product.selected_selling_plan_allocation
+if current_selling_plan_allocation == nil and current_variant.selling_plan_allocations.size > 0
+    assign current_selling_plan_allocation = current_variant.selling_plan_allocations | first
+endif
+assign offer = current_selling_plan_allocation | default: current_variant
+
+assign previously_purchased = false
+assign trial_in_cart = false
+
+for item in cart.items
+    if item.product.template_suffix == 'password-locked' and item.product.handle == product.handle
+        assign trial_in_cart = true
+    endif
+endfor -%}
+    
+<link rel="stylesheet" href="{{ 'vendor-photoswipe.css' | asset_url }}" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="{{ 'vendor-photoswipe-default-skin.css' | asset_url }}" media="print" onload="this.media='all'">
+<noscript>{{ 'vendor-photoswipe.css' | asset_url | stylesheet_tag }}</noscript>
+<noscript>{{ 'vendor-photoswipe-default-skin.css' | asset_url | stylesheet_tag }}</noscript>
+    
+    <div data-section-id="{{ section.id }}" data-section-type="product" data-enable-history-state="true" itemscope itemtype="http://schema.org/Product">
+      {%- if section.settings.show_breadcrumbs -%}
+        {% render 'breadcrumb' %}
+      {%- endif -%}
+      <div class="[ container mx-auto {% if section.settings.show_breadcrumbs %}py-4{% else %}pb-4{% endif %} md:py-8 px-4 lg:px-8 ] product-single">
+        {%- assign current_variant = product.selected_or_first_available_variant -%}
+        {%- assign featured_image = current_variant.featured_image | default: product.featured_image -%}
+        <div data-product-single-main class="[ lg:grid lg:grid-cols-12 lg:auto-rows-min lg:gap-x-8 ]">
+          <div class="[ lg:col-span-7 xl:col-span-8 ]">
+            {%- if product.images.size > 1 -%}
+              <div class="-ml-4 flex flex-row flex-nowrap overflow-x-auto w-screen lg:ml-0 lg:w-auto lg:grid lg:grid-cols-1 lg:grid-cols-2 lg:grid-rows-3 lg:gap-8">
+                {%- for image in product.images -%}
+                  {%- if forloop.index == 1 -%}
+                  <img loading="lazy" width="{{ image.width }}" height="{{ image.height }}" class="cursor-zoom-in w-10/12 lg:w-full lg:col-span-2 lg:row-span-2 " data-variant-image="{{ image | img_url | replace: '_small', '' }}" data-gallery-image src="{{ image | img_url: '640x640' }}" alt="{{ image.alt | escape }}">
+                  {%- else -%}
+                  <img loading="lazy" width="{{ image.width }}" height="{{ image.height }}" class="cursor-zoom-in w-10/12 lg:w-full" data-variant-image="{{ image | img_url | replace: '_small', '' }}" src="{{ image | img_url: '640x640' }}" data-gallery-image alt="{{ image.alt | escape }}">
+                  {%- endif -%}
+                {%- endfor -%}
+              </div>
+            {%- else -%}
+              {% if featured_image != blank %}
+              <div class="d-block">
+                <img loading="lazy" width="{{ featured_image.width }}" height="{{ featured_image.height }}" class="d-block w-full" src="{{ featured_image | img_url: '640x640' }}" alt="{{ featured_image.alt | escape }}" data-product-featured-image>
+              </div>
+              {% endif %}
+            {%- endif -%}
+          </div>
+    
+          <div class="[ mt-8 lg:mt-0 lg:col-span-5 xl:col-span-4 lg:sticky lg:top-4 lg:self-start ]">
+          <product-form>
+            {% form 'product', product, data-product-form: '', data-product-handle: product.handle %}
+              {%- for block in section.blocks -%}
+                {%- case block.type -%}
+                  {%- when '@app' -%}
+                    {% render block %}
+                  {%- when 'product_title' -%}
+                    <h1 class="[ mt-3 lg:mt-0 text-base leading-none lg:text-lg lg:leading-none ]">{{ product.title }}</h1>
+                  {%- when 'product_price' -%}
+                    <p class="mt-3 text-lg" data-price-wrapper>
+                      <span data-product-price>
+                      {{ offer.price | money }}</span>
+                      <span {% unless offer.compare_at_price_max > offer.price %}style="display: none;"{% endunless %} class="visually-hidden" data-compare-text>{{ 'products.product.regular_price' | t }}</span>
+                      <s class="[ text-xs text-red-600 ]" data-product-compare-price>
+                      {% if offer.compare_at_price > offer.price %}
+                          {{ offer.compare_at_price | money }}
+                      {% endif %}
+                      </s>
+                    </p>
+                  {%- when 'product_vendor' -%}
+                    {% if product.vendor != blank %}
+                    <p class="text-xs mt-3">{{ product.vendor }}</p>
+                    {% endif %}
+                  {%- when 'stock_notice' -%}
+                    <div class="mt-3" data-product-stock-notice>
+                      {%- if offer.inventory_quantity > 0 -%}
+                        {%- if settings.low_stock_warning -%}
+                          {%- assign threshold = settings.low_stock_threshold | plus: 0 -%}
+                          {%- if offer.inventory_quantity <= threshold -%}
+                            <p class="font-bold text-orange-500">{{ 'products.product.low_in_stock' | t: amount: offer.inventory_quantity }}</p>
+                          {%- else -%}
+                            <p class="font-bold text-green-500">{{ 'products.product.in_stock' | t }}</p>
+                          {%- endif -%}
+                        {%- else -%}
+                          <p class="font-bold text-green-500">{{ 'products.product.in_stock' | t }}</p>
+                        {%- endif -%}
+                      {%- else -%}
+                        {%- if offer.available -%}
+                          <p class="font-bold text-green-500">{{ 'products.product.in_stock' | t }}</p>
+                        {%- else -%}
+                          <p class="font-bold text-red-500">{{ 'products.product.sold_out' | t }}</p>
+                        {%- endif -%}
+                      {%- endif -%}
+                    </div>
+                  {%- when 'variant_selectors' -%}
+                    {%- unless product.has_only_default_variant -%}
+                      <div class="flex flex-wrap items-end -mx-3">
+                        {%- for option in product.options_with_values -%}
+                        <div class="mt-3 px-3 flex-grow min-w-5/10">
+                          <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="Option{{ option.position }}">{{ option.name }}</label>
+                          <div class="inline-block relative w-full selector-wrapper js">
+                            <select class="block appearance-none w-full bg-white border border-color px-4 py-3 pr-8 leading-tight focus:outline-none focus:shadow-outline text-base"
+                              id="Option{{ option.position }}"
+                              name="options[{{ option.name | escape }}]"
+                              data-option-selector>
+                              {% for value in option.values %}
+                              <option value="{{ value | escape }}"{% if option.selected_value == value %}selected="selected"{% endif %}>
+                                  {{ value }}
+                              </option>
+                              {% endfor %}
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                          </div>
+                        </div>
+                        {%- endfor -%}
+                      </div>
+                    {%- endunless -%}
+                  
+                    {%- liquid
+                    assign has_variant_metafield = false
+                    for variant in product.variants
+                      assign package_details = variant.metafields.recharge.package_details
+                      if package_details != blank
+                        assign has_variant_metafield = true
+                      endif
+                    endfor -%}
+                    {%- if has_variant_metafield -%}
+                      {%- assign product_form_meta_bg = settings.product_form_meta_bg -%}
+                      {%- assign product_form_meta_color = settings.product_form_meta_color -%}
+                      <div class="product-single__variant-metafields mt-3" data-metafields-container>
+                      {%- for variant in product.variants -%}
+                          {%- assign package_details = variant.metafields.recharge.package_details -%}
+                          {%- unless package_details == blank -%}
+                          <p style="background-color: {{ product_form_meta_bg }}; color: {{ product_form_meta_color }};" class="{% unless product.selected_or_first_available_variant.id == variant.id %}hidden{% endunless %} block text-sm py-2 px-4 mt-3 font-bold" data-variant-metafield="{{ variant.id }}">{{ package_details }}</p>
+                          {%- endunless -%}
+                      {%- endfor -%}
+                      </div>
+                    {%- endif -%}
+                
+                    {%- if product.selling_plan_groups.size > 0 -%}
+                    <selling-plan data-product='{{ product | json }}' data-selling-plans class="block mt-3" x-data="{ showSizeGuide: false, purchaseType: 'subscription'}">
+                      <legend class="sr-only">Purchase options</legend>
+                      {% for group in product.selling_plan_groups %}
+                        <!-- Checked: "bg-indigo-50 border-indigo-200 z-10", Not Checked: "border-gray-200" -->
+                        <label :class="{ 'bg-gray-100 border-indigo-200 z-10': purchaseType === 'subscription' }" @click="purchaseType = 'subscription'" class="border-gray-200 relative border border-solid p-4 flex cursor-pointer rounded-tl-md rounded-tr-md">
+                          <input data-purchase-option-selector checked value="subscription" id="subscription" type="radio" name="purchase_option" class="h-4 w-4 mt-0.5 cursor-pointer text-indigo-600 border-gray-300 focus:ring-indigo-500" aria-labelledby="privacy-setting-1-label" aria-describedby="privacy-setting-1-description">
+                          <div class="ml-3 flex flex-col">
+                            <!-- Checked: "text-indigo-900", Not Checked: "text-gray-900" -->
+                            <span class="text-gray-900 block text-sm font-medium font-bold text-lg">{{ 'products.subscription.subscription' | t }}</span>
+                            {%- assign product_onetime_subscription = product.metafields.accentuate.product_subscription_subtitle -%}
+                            {%- unless product_onetime_subscription == blank -%}
+                            <span x-show="purchaseType == 'subscription'" class="text-gray-700 block text-sm pt-2">{{ product_onetime_subscription }}</span>
+                            {%- endunless -%}
+                            <select :class="{ 'border-indigo-200 z-10': purchaseType === 'subscription' }" class="appearance-none mt-2 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white"
+                              data-single-plan-selector
+                              data-group-id="{{ group.id }}"
+                              name="selling_plan">
+                              {% for plan in group.selling_plans %}
+                              <!-- {{ plan | json }} -->
+                              <option value="{{ plan.id }}" {% if product.selected_selling_plan.id == plan.id %}selected="selected"{% endif %}>{{ plan.name }} - Save {{ plan.price_adjustments[0].value }}%</option>
+                              {% endfor %}
+                            </select>
+                            <span class="text-gray-700 block text-sm pt-2 font-bold">{{ 'products.subscription.subscription_sub' | t }}</span>
+                          </div>
+                        </label>
+                        {% endfor %}
+                
+                        <div class="bg-white rounded-md -space-y-px">
+                          {% unless product.requires_selling_plan %}
+                          <!-- Checked: "bg-indigo-50 border-indigo-200 z-10", Not Checked: "border-gray-200" -->
+                          <label :class="{ 'bg-gray-100 border-indigo-200 z-10': purchaseType === 'one_time' }" @click="purchaseType = 'one_time'" class="border-gray-200 border-solid rounded-bl-md rounded-br-md relative border p-4 flex cursor-pointer" for="oneTime">
+                            <input data-purchase-option-selector value="one_time" type="radio" name="purchase_option" id="oneTime" class="h-4 w-4 mt-0.5 cursor-pointer text-indigo-600 border-gray-300 focus:ring-indigo-500" aria-labelledby="privacy-setting-0-label" aria-describedby="privacy-setting-0-description">
+                            <div class="ml-3 flex flex-col">
+                              <!-- Checked: "text-indigo-900", Not Checked: "text-gray-900" -->
+                              <span class="text-gray-900 block text-sm font-medium font-bold text-lg">{{ 'products.subscription.one_time' | t }}</span>
+                              <!-- Checked: "text-indigo-700", Not Checked: "text-gray-500" -->
+                              {%- assign product_onetime_subtitle = product.metafields.accentuate.product_onetime_subtitle -%}
+                              {%- assign one_time_sub = 'products.subscription.one_time_sub' | t -%}
+                              {%- unless product_onetime_subtitle == blank -%}
+                                <span x-show="purchaseType == 'one_time'" class="text-gray-700 block text-sm pt-2">{{ product_onetime_subtitle }}</span>
+                              {%- endunless -%}
+                              {%- unless one_time_sub == blank -%}
+                                <span class="text-gray-700 block text-sm pt-2 font-bold">{{ 'products.subscription.one_time_sub' | t }}</span>
+                              {%- endunless -%}
+                            </div>
+                          </label>
+                          {% endunless %}
+                        </div>
+                    </selling-plan>
+                    {%- endif -%}
+                
+                    <select name="id" data-productid="{{ product.id }}" class="no-js hidden" data-product-select>
+                      {% for variant in product.variants %}
+                        <option {% if variant == current_variant %}selected="selected"{% endif %}
+                          {% unless variant.available %}disabled="disabled"{% endunless %}
+                          value="{{ variant.id }}">
+                          {{ variant.title }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  {%- when 'product_description' -%}
+                    <div class="rte mt-3">
+                      {{ product.description }}
+                    </div>
+                  {%- when 'add_to_cart' -%}
+
+                    {%- if customer -%}
+
+                        {%- for tag in customer.tags -%}
+                            {%- if tag == section.settings.trial_tag -%}
+                                {%- assign previously_purchased = true -%}
+                            {%- endif -%}
+                        {%- endfor -%}
+            
+                        {%- comment -%} Previously purchased, not in cart {%- endcomment -%}
+                        {%- if previously_purchased -%}
+                            {%- render 'alert-error' with error: "Already purchased a free trial" -%}
+                        {%- comment -%} Previously purchased, not in cart {%- endcomment -%}
+                        {%- elsif trial_in_cart == true -%}
+                            {%- render 'alert-error' with error: "Your free trial pack is already in your cart" -%}
+                        {%- elsif previously_purchased == false and trial_in_cart == false -%}
+                        <div class="flex flex-wrap items-end -mx-3 mt-3">
+                            <input type="hidden" id="Quantity" name="quantity" value="1" >
+                            <div class="px-3 flex-grow">
+                              {%- unless size_guide == blank -%}
+                                <p x-data @click="$dispatch('size-guide-trigger')" class="[ cursor-pointer heading block tracking-wide text-gray-700 text-xs mb-2 text-right ]">{{ 'products.product.size_guide' | t }}</p>
+                              {%- endunless-%}
+                              <button class="[ w-full focus:shadow-outline focus:outline-none font-bold py-3 px-4 leading-tight disabled:opacity-50 ] heading btn add-to-cart-button" type="submit" name="add" data-add-to-cart
+                                {% unless current_variant.available %}disabled="disabled"{% endunless %}>
+                                  <span data-add-to-cart-text>
+                                    {% if current_variant.available %}
+                                      {{ 'products.product.add_to_cart' | t }}
+                                    {% else %}
+                                      {{ 'products.product.sold_out' | t }}
+                                    {% endif %}
+                                  </span>
+                              </button>
+                            </div>
+                        </div>
+                        {%- if additional_checkout_buttons -%}
+                            <div class="additional-checkout-buttons mt-3">
+                              {{ content_for_additional_checkout_buttons }}
+                            </div>
+                        {%- endif -%}
+                        {%- endif -%}
+            
+                    {%- comment -%} If the customer is NOT logged in {%- endcomment -%}
+                    {%- else -%}
+                    
+                        <!-- close the cart form -->
+                        </form>
+                        
+                        <div class="mt-3">
+                            {%- render 'alert-error' with heading: "Log in or create an account", error: "You must be logged to purchase a product." -%}
+                            <div x-data="{ activeTab: 'login' }" class="my-5">
+                                <div class="border-b border-color border-solid">
+                                    <nav class="-mb-px flex pb-4 space-x-8" aria-label="Tabs">
+                                        <p @click="activeTab = 'login'" :class="{ 'bg-gray-100' : activeTab === 'login' }" class="heading px-3 py-2 font-medium text-xs cursor-pointer rounded-md">{{ 'layout.customer.log_in' | t }}</p>
+                                
+                                        <p @click="activeTab = 'register'" :class="{ 'bg-gray-100' : activeTab === 'register' }" class="heading px-3 py-2 font-medium text-xs cursor-pointer rounded-md">{{ 'layout.customer.create_account' | t }}</p>
+                                    </nav>
+                                </div>
+                                <div x-cloak x-show="activeTab == 'login' ">
+                                    {%- render 'customer-login-form' -%}
+                                </div>
+                                <div x-cloak x-show="activeTab == 'register' ">
+                                    {%- render 'customer-registration-form' -%}
+                                </div>
+                            </div>
+                        </div>
+                    {%- endif -%}
+                    
+                  {%- when 'collapsible_tab' -%}
+                    <div x-data="{ open: {% if block.settings.open_by_default %}true{% else %}false{% endif%} }" class="border-t border-b border-solid border-color accordion accordion--product">
+                      {%- unless block.settings.heading == blank -%}
+                        <div class="cursor-pointer py-3 flex" @click="open = ! open">
+                          <p class="heading ">{{ block.settings.heading }}</p>
+                          <div class="ml-auto">
+                            <span x-cloak x-show="open == false">{% render 'icon-plus' with height: 15, width: 15 %}</span>
+                            <span x-cloak x-show="open == true">{% render 'icon-minus' with height: 15, width: 15 %}</span>
+                          </div>
+                        </div>
+                      {%- endunless -%}
+                        <div class="rte pb-3" x-show="open == true">
+                          {%- if block.settings.product_description -%}
+                            {{ product.description }}
+                          {%- endif -%}
+                          {%- unless block.settings.content == blank -%}
+                            {{ block.settings.content }}
+                          {%- endunless -%}
+                          {%- unless block.settings.page_content == blank -%}
+                            {{ pages[block.settings.page_content].content }}
+                          {%- endunless -%}
+                        </div>
+                    </div>
+                  {%- when 'product_countdown' -%}
+                    {% render 'product-countdown' with block: block %}
+                  {%- when 'social_sharing' -%}
+                    {% render 'social-sharing', share_title: product.title, share_permalink: product.url, share_image: product %}
+                  {%- when 'related_products' -%}
+                    {% render 'product-tagged-related-products' %}
+                  {%- when 'separator'-%}
+                    <hr class="mt-3">
+                  {%- when 'product_usp' -%}
+                    <div class="p-2 mt-3" style="background-color: {{ block.settings.background_color }};">
+                      <div class="flex flex-row items-center align-center" style="color: {{ block.settings.font_color }};">
+                        <div class="pr-2">
+                          {{ block.settings.icon }}
+                        </div>
+                        <div class="pl-0">
+                          {%- unless block.settings.heading == blank -%}
+                            <p style="font-size: {{ block.settings.heading_size }}px;" class="heading mb-0 leading-relaxed">{{ block.settings.heading }}</p>
+                          {%- endunless -%}
+                          {%- unless block.settings.description == blank -%}
+                            <p style="font-size: {{ block.settings.description_size }}px;" class=" mb-0 leading-relaxed">{{ block.settings.description }}</p>
+                          {%- endunless -%}
+                        </div>
+                      </div>
+                    </div>
+                  {%- when 'product_reviews' -%}
+                    <div id="shopify-product-reviews" data-id="{{ product.id }}">{{ product.metafields.spr.reviews }}</div>
+                  {%- when 'data_related_products' -%}
+                    {% render 'product-data-recommended-products-mini' with section_id: section.id, the_limit: block.settings.limit %}
+                {%- endcase -%}
+              {%- endfor -%}
+            {%- endform -%}
+          </product-form>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    {%- unless size_guide == blank -%}
+      <div x-cloak x-data="{ open: false }" :class="open ? 'block' : 'hidden'" x-on:size-guide-trigger.window="open = true" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div @keyup.window.escape="open = false"  @click="open = false" x-transition class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+              <!-- This element is to trick the browser into centering the modal contents. -->
+              <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+              <div x-transition class="bg-white inline-block align-bottom px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full sm:p-6">
+                  <div>
+                      <div class="mt-3 text-center sm:mt-5">
+                          <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">{{ 'products.product.size_guide' | t }}</h3>
+                          <div class="mt-2">
+                              {{ size_guide }}
+                          </div>
+                      </div>
+                  </div>
+                  <div class="mt-5 sm:mt-6">
+                      <button @click="open = false" type="button" class="btn secondary-button [ inline-flex justify-center w-full px-4 py-2 text-base sm:text-sm ]">
+                          Okay, got it!
+                      </button>
+                  </div>
+              </div>
+          </div>
+      </div>
+    {%- endunless -%}
+    
+    <script defer src="{{ 'vendor-photoswipe.min.js' | asset_url }}"></script> 
+    <script defer src="{{ 'vendor-photoswipe-default.min.js' | asset_url }}"></script>
+    
+    <!-- Root element of PhotoSwipe. Must have class pswp. -->
+    <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    
+      <!-- Background of PhotoSwipe. 
+           It's a separate element as animating opacity is faster than rgba(). -->
+      <div class="pswp__bg"></div>
+    
+      <!-- Slides wrapper with overflow:hidden. -->
+      <div class="pswp__scroll-wrap">
+    
+          <!-- Container that holds slides. 
+              PhotoSwipe keeps only 3 of them in the DOM to save memory.
+              Don't modify these 3 pswp__item elements, data is added later on. -->
+          <div class="pswp__container">
+              <div class="pswp__item"></div>
+              <div class="pswp__item"></div>
+              <div class="pswp__item"></div>
+          </div>
+    
+          <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+          <div class="pswp__ui pswp__ui--hidden">
+              <div class="pswp__top-bar">
+    
+                  <!--  Controls are self-explanatory. Order can be changed. -->
+                  <div class="pswp__counter"></div>
+                  <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                  <button class="pswp__button pswp__button--share" title="Share"></button>
+                  <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                  <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+    
+                  <!-- Preloader demo https://codepen.io/dimsemenov/pen/yyBWoR -->
+                  <!-- element will get class pswp__preloader--active when preloader is running -->
+                  <div class="pswp__preloader">
+                      <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                          <div class="pswp__preloader__donut"></div>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                  <div class="pswp__share-tooltip"></div> 
+              </div>
+              <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+              </button>
+              <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+              </button>
+              <div class="pswp__caption">
+                  <div class="pswp__caption__center"></div>
+              </div>
+          </div>
+      </div>
+    </div>
+    
+    <script type="text/javascript">
+    
+      const pswpElement     = document.querySelector('.pswp'),
+          galleryImages     = document.querySelectorAll('[data-gallery-image]');
+    
+      const items = [
+        {%- for image in product.images -%}
+          {
+            src: '{{ image | img_url: "1400x" }}',
+            w: 1400
+          },
+        {%- endfor -%}
+      ];
+    
+      const options = {
+          index: 0
+      };
+    
+      galleryImages.forEach( element =>{
+    
+        element.addEventListener('click', function (event) {
+          const gallery = new PhotoSwipe( pswpElement, PhotoSwipeUI_Default, items, options);
+          gallery.init();
+        });
+      });
+    </script>
+    
+    {%- if settings.development_mode -%}
+      <script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
+    {%- else -%}
+      <script src="{{ 'product-form.min.js' | asset_url }}" defer="defer"></script>
+    {%- endif -%}
+    
+    <script type="application/ld+json" data-creator-name="FeedArmy">
+      {
+        "@context": "http://schema.org/",
+        "@type": "Product",
+        "name": "{{ product.title | strip_html | escape }}",
+        "url": "{{ shop.url }}{{ product.url }}",
+        {% if product.first_available_variant.sku != blank %}
+          "sku": "{{ product.first_available_variant.sku }}",
+        {% else %}
+          "sku": "{{ product.first_available_variant.id }}",
+        {% endif %}
+        {% if product.first_available_variant.barcode.size == 12 %}
+          "gtin12": {{ product.first_available_variant.barcode }},
+        {% endif %}
+        {% if product.first_available_variant.barcode.size == 13 %}
+          "gtin13": {{ product.first_available_variant.barcode }},
+        {% endif %}
+        {% if product.first_available_variant.barcode.size == 14 %}
+          "gtin14": {{ product.first_available_variant.barcode }},
+        {% endif %}
+        "brand": {
+          "@type": "Thing",
+          "name": "{{ product.vendor | escape }}"
+        },
+        "description": "{{ product.description | strip_html | escape }}",
+        "image": [{% for image in product.images %}
+          
+         {% if forloop.last == true %}
+            "{{ image.src  }}"
+          {% else %}
+            "{{ image.src  }}",
+          {% endif %}
+      {% endfor %}],
+          "offers": [
+              {
+                "@type" : "Offer",
+                "priceCurrency": "{{ shop.currency }}",
+                "price": "{{ current_variant.price | money_without_currency }}",
+                "itemCondition" : "http://schema.org/NewCondition","priceValidUntil":"2020-11-05",
+                "availability" : "http://schema.org/{% if product.available %}InStock{% else %}OutOfStock{% endif %}",
+                "url" : "{{ shop.url }}{{ variant.url }}"
+              }
+          ]
+          {% if product.metafields.spr.reviews != blank %}
+          ,"aggregateRating": {
+           "@type": "AggregateRating",
+           "ratingValue": {{ product.metafields.spr.reviews | split: 'ratingValue" content="' | last | split: '"' | first | plus: 0 }},
+           "ratingCount": {{ product.metafields.spr.reviews | split: 'reviewCount" content="' | last | split: '"' | first | plus: 0 }}
+          },
+        "review": {
+          "@type": "Review",
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "{{ product.metafields.spr.reviews | split: 'ratingValue" content="' | last | split: '"' | first | plus: 0 }}",
+            "bestRating": "5"
+          },
+          "author": {
+            "@type": "Person",
+            "name": "{{ shop.name }}"
+          }
+        }{% endif %}
+       
+      }
+    </script>
+    
+    {% schema %}
+      {
+        "name": "Trial Product page",
+        "settings": [
+          {
+            "type": "checkbox",
+            "id": "show_breadcrumbs",
+            "label": "Show Breadcrumbs?",
+            "default": true
+          },
+          {
+            "type": "checkbox",
+            "id": "show_share_buttons",
+            "label": "Show social sharing buttons",
+            "default": true
+          },
+          {
+            "type": "text",
+            "id": "trial_tag",
+            "label": "Trial Tag",
+            "info": "The tag the customer must have once they've bought the trial"
+          }
+        ],
+        "blocks":[
+          {
+            "type": "@app"
+          },
+          {
+            "type": "separator",
+            "name": "Separator"
+          },
+          {
+            "type": "product_title",
+            "name": "Product Title",
+            "limit": 1
+          },
+          {
+            "type": "product_price",
+            "name": "Product Price",
+            "limit": 1
+          },
+          {
+            "type": "variant_selectors",
+            "name": "Variant Selectors",
+            "limit": 1
+          },
+          {
+            "type": "stock_notice",
+            "name": "Stock Notice",
+            "limit": 1
+          },
+          {
+            "type": "product_vendor",
+            "name": "Product Vendor",
+            "limit": 1
+          },
+          {
+            "type": "add_to_cart",
+            "name": "Add to cart",
+            "limit": 1
+          },
+          {
+            "type": "product_description",
+            "name": "Product Description",
+            "limit": 1
+          },
+          {
+            "type":"product_reviews",
+            "name": "Product Reviews",
+            "limit": 1
+          },
+          {
+            "type": "collapsible_tab",
+            "name": "Collapsible Tab",
+            "limit": 3,
+            "settings": [
+              {
+                "type": "text",
+                "id": "heading",
+                "label": "Heading"
+              },
+              {
+                "type": "textarea",
+                "id": "content",
+                "label": "Content",
+                "info": "Enter custom content or choose content from a metafield"
+              },
+              {
+                "type": "checkbox",
+                "id": "product_description",
+                "label": "Product Description",
+                "default": false
+              },
+              {
+                "type": "page",
+                "id": "page_content",
+                "label": "Page",
+                "info": "Choose content fromg"
+              },
+              {
+                "type": "checkbox",
+                "id": "open_by_default",
+                "label": "Open?",
+                "info": "Should this tab be open by default?",
+                "default": true
+              }
+            ]
+          },
+          {
+            "type":"product_usp",
+            "name": "Product USP",
+            "settings": [
+              {
+                "type": "color",
+                "id": "background_color",
+                "label": "Background Color",
+                "default": "#EEEEEE"
+              },
+              {
+                "type": "color",
+                "id": "font_color",
+                "label": "Font Color",
+                "default": "#000000"
+              },
+              {
+                "type": "html",
+                "id": "icon",
+                "label": "Icon",
+                "default": "<p>Insert Hero Icon here</p>",
+                "info": "Drop Heroicon SVG here"
+              },
+              {
+                "type": "text",
+                "id": "heading",
+                "label": "Heading"
+              },
+              {
+                "type": "range",
+                "id": "heading_size",
+                "label": "Heading font size",
+                "min": 6,
+                "max": 30,
+                "step": 1,
+                "default": 10
+              },
+              {
+                "type": "textarea",
+                "id": "description",
+                "label": "Description"
+              },
+              {
+                "type": "range",
+                "id": "description_size",
+                "label": "Description font size",
+                "min": 6,
+                "max": 30,
+                "step": 1,
+                "default": 10
+              }
+            ]
+          },
+          {
+            "type": "product_countdown",
+            "name": "Countdown",
+            "limit": 1,
+            "settings": [
+              {
+                "type": "checkbox",
+                "id": "show_when_expired",
+                "label": "Show when expired?",
+                "default": true
+              },
+              {
+                "type": "color",
+                "id": "background_color",
+                "label": "Background Color",
+                "default": "#EEEEEE"
+              },
+              {
+                "type": "text",
+                "id": "expired_message",
+                "label": "Expired Message",
+                "default": "This countdown has expired"
+              },
+              {
+                "type": "select",
+                "id": "count_to",
+                "label": "Count to..?",
+                "options": [
+                    {
+                        "value": "date",
+                        "label": "Date"
+                    },
+                    {
+                        "value": "time",
+                        "label": "Time"
+                    },
+                    {
+                        "value": "both",
+                        "label": "Both"
+                    }
+                ],
+                "default": "both"
+              },
+              {
+                "type": "header",
+                "content": "Days to show Countdown"
+              },
+              {
+                "type": "checkbox",
+                "id": "monday",
+                "label": "Monday",
+                "default": true
+              },
+              {
+                "type": "checkbox",
+                "id": "tuesday",
+                "label": "Tuesday",
+                "default": true
+              },
+              {
+                "type": "checkbox",
+                "id": "wednesday",
+                "label": "Wednesday",
+                "default": true
+              },
+              {
+                "type": "checkbox",
+                "id": "thursday",
+                "label": "Thursday",
+                "default": true
+              },
+              {
+                "type": "checkbox",
+                "id": "friday",
+                "label": "Friday",
+                "default": true
+              },
+              {
+                "type": "checkbox",
+                "id": "saturday",
+                "label": "Saturday",
+                "default": true
+              },
+              {
+                "type": "checkbox",
+                "id": "sunday",
+                "label": "Sunday",
+                "default": true
+              },
+              {
+                "type": "header",
+                "content": "Content"
+              },
+              {
+                "type": "text",
+                "id": "heading",
+                "label": "Heading",
+                "default": "DELIVERY"
+              },
+              {
+                "type": "text",
+                "id": "content",
+                "label": "Content",
+                "info": "Add \'{countdown}\' in to the text if you wish to show a countdown.",
+                "default": "Order within {countdown} for same day dispatch."
+              },
+              {
+                "type": "header",
+                "content": "Date"
+              },
+              {
+                "type": "checkbox",
+                "id": "show_days",
+                "label": "Show Days?",
+                "default": true
+              },
+              {
+                "type": "select",
+                "id": "month",
+                "label": "Month",
+                "options": [
+                    {
+                        "value": "Jan",
+                        "label": "January"
+                    },
+                    {
+                        "value": "Feb",
+                        "label": "February"
+                    },
+                    {
+                        "value": "Mar",
+                        "label": "March"
+                    },
+                    {
+                        "value": "Apr",
+                        "label": "Apri"
+                    },
+                    {
+                        "value": "May",
+                        "label": "May"
+                    },
+                    {
+                        "value": "Jun",
+                        "label": "June"
+                    },
+                    {
+                        "value": "Jul",
+                        "label": "July"
+                    },
+                    {
+                        "value": "Aug",
+                        "label": "August"
+                    },
+                    {
+                        "value": "Sep",
+                        "label": "September"
+                    },
+                    {
+                        "value": "Oct",
+                        "label": "October"
+                    },
+                    {
+                        "value": "Nov",
+                        "label": "November"
+                    },
+                    {
+                        "value": "Dec",
+                        "label": "December"
+                    }
+                ],
+                "default": "Jan"
+              },
+              {
+                "type": "range",
+                "id": "day",
+                "label": "Day",
+                "min": 1,
+                "max": 31,
+                "step": 1,
+                "default": 1
+              },
+              {
+                "type": "text",
+                "id": "year",
+                "label": "Year",
+                "info": "Enter in for digit format. For example, 2021."
+              },
+              {
+                "type": "header",
+                "content": "Time"
+              },
+              {
+                "type": "checkbox",
+                "id": "show_time",
+                "label": "Show Time?",
+                "default": true
+              },
+              {
+                "type": "range",
+                "id": "second",
+                "label": "Second",
+                "min": 0,
+                "max": 60,
+                "step": 1,
+                "default": 0
+              },
+              {
+                "type": "range",
+                "id": "minute",
+                "label": "Minute",
+                "min": 0,
+                "max": 60,
+                "step": 1,
+                "default": 0
+              },
+              {
+                "type": "range",
+                "id": "hour",
+                "label": "Hour",
+                "min": 0,
+                "max": 24,
+                "step": 1,
+                "default": 14
+              }
+            ]
+          },
+          {
+            "type": "social_sharing",
+            "name": "Social Sharing",
+            "limit": 1
+          },
+          {
+            "type": "related_products",
+            "name": "Related Products",
+            "limit": 1
+          },
+          {
+            "type": "data_related_products",
+            "name": "Data Recommended Products",
+            "limit": 1,
+            "settings": [
+              {
+                "type": "range",
+                "id": "limit",
+                "label": "Limit",
+                "min": 1,
+                "max": 4,
+                "step": 1,
+                "default": 2
+              }
+            ]
+          }
+        ]
+      }
+{% endschema %}
+    

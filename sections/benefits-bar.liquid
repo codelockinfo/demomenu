@@ -1,0 +1,313 @@
+<link rel="stylesheet" href="{{ 'vendor-splide-core.min.css' | asset_url }}" media="print" onload="this.media='all'">
+<noscript>{{ 'vendor-splide-core.min.css' | asset_url | stylesheet_tag }}</noscript>
+
+{% style %}
+
+    .splide__slide{
+        height: auto !important;
+    }
+
+    .splide__arrows{
+        display: flex;
+        justify-content: space-between;
+        position: absolute;
+        z-index: 1;
+        top: calc(50% - 7.5px);
+        left: 0;
+        width: 100%;
+        padding: 0 0.5rem;
+    }
+
+    .splide__arrow:disabled{ visibility: hidden; }
+
+    .splide__arrow.splide__arrow--prev{
+        left: 0;
+        transform: rotate(180deg);
+    }
+
+    .splide__arrow.splide__arrow--next{
+        right: 0;
+    }
+    
+    .splide__arrow svg{
+        height: 15px;
+        width: 15px;
+    }
+
+    {%- for block in section.blocks -%}
+    #shopify-section-{{ section.id }} .splide__slide:nth-child({{ forloop.index }}){
+        background-color: {{ block.settings.background_color }};
+    }
+
+    #shopify-section-{{ section.id }} .splide__slide:nth-child({{ forloop.index }}) p{
+        color: {{ block.settings.font_color }};
+    }
+
+    #shopify-section-{{ section.id }} .splide__slide:nth-child({{ forloop.index }}) .benefits-bar__icon svg{
+        height: {{ block.settings.icon_size }}px;
+        color: {{ block.settings.icon_color }};
+    }
+
+    #shopify-section-{{ section.id }} .splide__slide:nth-child({{ forloop.index }}) .benefits-bar__title{
+        font-size: {{ block.settings.title_size }}px;
+    }
+
+    #shopify-section-{{ section.id }} .splide__slide:nth-child({{ forloop.index }}) .benefits-bar__text{
+        font-size: {{ block.settings.content_size }}px;
+    }
+    {%- endfor -%}
+{% endstyle %}
+
+{%- if section.settings.show_benefits_bar -%}
+<div id="{{ section.id }}" class="{% if section.settings.contain_section %}container{% endif %}mt-4 {% if template != "index" %}mb-4 md:mb-0{% endif %} mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="hidden splide mx-auto" >
+        <div class="splide__track">
+            <div class="splide__list">
+                {%- for block in section.blocks -%}
+                <div id="benefit-{{ block.id }}" class="splide__slide benefits-bar__col" {{ block.shopify_attributes }}>
+                    <div class="benefits-bar__inner flex justify-center items-center p-3">
+                        {%- if block.settings.benefit_icon != blank -%}
+                        <div class="benefits-bar__icon mr-4">
+                            {{ block.settings.benefit_icon }}
+                        </div>
+                        {%- endif -%}
+                        <div class="benefits-bar__content {{ block.settings.content_alignment }}">
+                        {%- if block.settings.benefit_title != blank -%}
+                            <p class="benefits-bar__title heading"><strong>{{ block.settings.benefit_title | newline_to_br }}</strong></p>
+                        {%- endif -%}
+                        {%- if block.settings.benefit_content != blank -%}
+                            <p class="benefits-bar__text">{{ block.settings.benefit_content | newline_to_br }}</p>
+                        {%- endif -%}
+                        </div>
+                    </div>
+                </div>
+                {%- endfor-%}
+            </div>
+        </div>
+    </div>
+</div>
+{%- endif -%}
+
+<script defer src="{{ 'vendor-splide.min.js' | asset_url }}" type="text/javascript"></script>
+
+<script>
+
+    const benefitsBar      = document.getElementById('shopify-section-{{ section.id }}'),
+        arrows             = Boolean('{{ section.settings.show_arrows }}'),
+        // speed              = benefitsBar.dataset.speed,
+        // autoPlay           = benefitsBar.dataset.autoplay,
+        desktop            = parseInt(`{{ section.settings.cols_desktop }}`),
+        tablet             = parseInt(`{{ section.settings.cols_tablet }}`),
+        mobile             = parseInt(`{{ section.settings.cols_mobile }}`);
+
+    document.addEventListener( 'DOMContentLoaded', function() {
+        const splide = new Splide('#shopify-section-{{ section.id }} .splide', {
+            perPage: desktop,
+            pagination: false,
+            arrows: arrows,
+            gap    : '1rem',
+            breakpoints: {
+                640: {
+                    perPage: mobile,
+                    gap    : '.7rem',
+                    arrows: arrows,
+                },
+                1024: {
+                    perPage: tablet,
+                    gap    : '.7rem',
+                    arrows: arrows,
+                },
+            },
+        });
+
+        splide.on( 'mounted', function () {
+            document.querySelector('#shopify-section-{{ section.id }} .splide').classList.remove("hidden");
+        });
+
+        splide.mount();
+    });
+
+</script>
+
+{% schema %}
+{
+    "name": "Benefits Bar",
+    "settings": [
+        {
+            "type": "checkbox",
+            "id": "show_benefits_bar",
+            "label": "Show Benefits Bar?",
+            "default": true
+        },
+        {
+            "type": "checkbox",
+            "id": "contain_section",
+            "label": "Contain Section?",
+            "default": true
+        },
+        {
+            "type": "select",
+            "id": "cols_mobile",
+            "label": "Columns to show - Mobile",
+            "options": [
+                {
+                    "value": "2",
+                    "label": "2"
+                },
+                {
+                    "value": "1",
+                    "label": "1"
+                }
+            ],
+            "default": "1"
+        },
+        {
+            "type": "select",
+            "id": "cols_tablet",
+            "label": "Columns to show - Tablet",
+            "options": [
+                {
+                    "value": "3",
+                    "label": "3"
+                },
+                {
+                    "value": "2",
+                    "label": "2"
+                }
+            ],
+            "default": "2"
+        },
+        {
+            "type": "select",
+            "id": "cols_desktop",
+            "label": "Columns to show - Desktop",
+            "options": [
+                {
+                    "value": "3",
+                    "label": "3"
+                },
+                {
+                    "value": "2",
+                    "label": "2"
+                },
+                {
+                    "value": "1",
+                    "label": "1"
+                }
+            ],
+            "default": "3"
+        },
+        {
+            "type": "checkbox",
+            "id": "show_arrows",
+            "label": "Show Arrows?",
+            "default": true
+        },
+        {
+            "type": "checkbox",
+            "id": "autoplay",
+            "label": "Autoplay?",
+            "default": true
+        },
+        {
+             "type": "text",
+             "id": "autoplay_speed",
+             "label": "Autoplay speed",
+             "default": "5000"
+        }
+    ],
+    "blocks":[
+        {
+            "type": "benefit",
+            "name": "Benefit",
+            "settings": [
+                {
+                    "type": "select",
+                    "id": "content_alignment",
+                    "label": "Content Alignment",
+                    "default": "text-center",
+                    "options": [
+                        {
+                            "label": "Left",
+                            "value": "text-left"
+                        },
+                        {
+                            "label": "Center",
+                            "value": "text-center"
+                        },
+                        {
+                            "label": "Right",
+                            "value": "text-right"
+                        }
+                    ]
+                },
+                {
+                    "type": "textarea",
+                    "id": "benefit_title",
+                    "label": "Benefit Title"
+                },
+                {
+                    "type": "range",
+                    "id": "title_size",
+                    "label": "Title Size",
+                    "min": 2,
+                    "max": 40,
+                    "step": 1,
+                    "default": 14
+                },
+                {
+                    "type": "textarea",
+                    "id": "benefit_content",
+                    "label": "Content"
+                },
+                {
+                    "type": "range",
+                    "id": "content_size",
+                    "label": "Content Size",
+                    "min": 2,
+                    "max": 40,
+                    "step": 1,
+                    "default": 12
+                },
+                {
+                    "type": "text",
+                    "id": "benefit_icon",
+                    "label": "Icon",
+                    "info": "Insert the code for a font awesome icon here."
+                },
+                {
+                    "type": "range",
+                    "id": "icon_size",
+                    "label": "Icon Size",
+                    "min": 2,
+                    "max": 40,
+                    "step": 1,
+                    "default": 28
+                },
+                {
+                    "type": "header",
+                    "content": "Colors"
+                },
+                {
+                    "type": "color",
+                    "id": "icon_color",
+                    "label": "Icon color",
+                    "default": "#000000"
+                },
+                {
+                    "type": "color",
+                    "id": "background_color",
+                    "label": "Background color",
+                    "default": "#FFFFFF"
+                },
+                {
+                    "type": "color",
+                    "id": "font_color",
+                    "label": "Font color",
+                    "default": "#000000"
+                }
+            ]
+        }
+    ]
+}
+{% endschema %}

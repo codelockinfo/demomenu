@@ -1,0 +1,108 @@
+<div data-section-id="{{ section.id }}" data-section-type="collection">
+    {%- for block in section.blocks -%}
+
+        {%- case block.type -%}
+            {%- when '@app' -%}
+                {% render block %}
+                
+            {%- when 'breadcrumbs' -%}
+                {% render 'breadcrumb' %}
+
+            {%- when 'header' -%}
+                {%- assign collection_nav = linklists[collection.handle] -%}
+                {% render 'page-header' with collection_nav: collection_nav %}
+
+            {%- when 'product_grid' -%}
+                <section>
+                    <div x-data="{ triggersOpen: false }">
+                        {%- render 'collection-filters' -%}
+                        <div id="CollectionProductGrid" >
+                            {%- paginate collection.products by 36 -%}
+                            <div class="{% if section.settings.contain %}container{% endif %} mx-auto  py-4 lg:py-8 px-4 overflow-hidden sm:py-24 sm:px-6 lg:px-8">
+                                <div id="main-collection-product-grid" data-id="{{ section.id }}" class="collection">
+                                    <div class="[ grid grid-cols-2 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 lg:gap-x-8 ]">
+                                    {%- for product in collection.products -%}
+                                        {%- render 'product-grid-item' with product: product -%}
+                                    {%- endfor -%}
+                                    </div>
+                                </div>
+                            </div>
+                            {% render 'pagination' with paginate: paginate %}
+                            {%- endpaginate -%}
+                        </div>
+                    </div>
+                </section>
+        {%- endcase -%}
+    {%- endfor -%}
+</div>
+
+<script>
+
+    window.addEventListener('DOMContentLoaded', function() {
+    
+        const collectionFiltersPosition = () => {
+
+            const header = document.getElementById("shopify-section-header");
+            const filters = document.querySelector("[data-collection-filters]");
+
+            console.log(header.getBoundingClientRect().height);
+
+            filters.style.top = `${header.getBoundingClientRect().height}px`;
+        };
+
+        collectionFiltersPosition();
+
+        window.addEventListener('resize', collectionFiltersPosition);
+
+    });
+</script>
+
+{%- render 'drawer-filters' -%}
+
+<script src="{{ 'collection-filters-form.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+    "name": "Collection page",
+    "settings": [
+        {
+            "type": "checkbox",
+            "id": "contain",
+            "label": "Contain the Grid within wrapper?",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "show_filters",
+            "label": "Show Filters?",
+            "default": true
+        },
+        {
+            "type": "checkbox",
+            "id": "enable_quick_buy",
+            "label": "Enable Quick Buy?",
+            "default": true
+        }
+    ],
+    "blocks":[
+        {
+          "type": "@app"
+        },
+        {
+            "type": "breadcrumbs",
+            "name": "Breadcrumbs",
+            "limit": 1
+        },
+        {
+            "type": "header",
+            "name": "Header",
+            "limit": 1
+        },
+        {
+            "type": "product_grid",
+            "name": "Product Grid",
+            "limit": 1
+        }
+    ]
+}
+{% endschema %}

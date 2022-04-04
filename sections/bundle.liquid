@@ -1,0 +1,286 @@
+<section id="{{ section.id }}">
+    <div class="container mx-auto px-4 flex flex-wrap">
+        <div class="w-full lg:w-3/5">
+            <bundle-items data-section-id="{{ section.id }}">
+                {%- for block in section.blocks -%}
+                    {%- if block.type == "product" -%}
+                    {%- assign bundle_product = all_products[block.settings.bundle_product] -%}
+                    {%- unless bundle_product == blank -%}
+                    <bundle-item class="mt-8 block" data-id="{{ bundle_product.id }}">
+                        <div class="flex flex-row flex-wrap">
+                            <div class="w-full lg:w-2/5">
+                                <img class="block min-w-full" loading="lazy" width="{{ bundle_product.featured_image.width }}" height="{{ bundle_product.featured_image.height }}" src="{{ bundle_product.featured_image | img_url: '650x650' }}" alt="{{ bundle_product.title }}">
+                            </div>
+                            <div class="py-4 md:px-4 lg:w-3/5">
+                                <h5><a href="{{ bundle_product.url }}">{{ bundle_product.title }}</a></h5>
+                                <div class="rte">{{ bundle_product.description }}</div>
+                                <button class="mt-4 p-4 leading-tight btn secondary-button">add to bundle</button>
+                            </div>
+                        </div>
+                    </bundle-item>
+                    {%- endunless -%}
+                    {%- endif -%}
+                {%- endfor -%}
+            </bundles-items>
+        </div>
+        <div class="w-full p-4 border border-solid border-color lg:w-2/5" x-data="{ itemsHidden : true }">
+            <bundle-cart-items class="bg-white">
+                <div class="divide-y divide-solid border-color" x-cloak :class="itemsHidden ? 'hidden md:block' : 'block' ">
+                {%- for block in section.blocks -%}
+                    {%- if block.type == "product" -%}
+                    {%- assign bundle_product = all_products[block.settings.bundle_product] -%}
+                    {%- unless bundle_product == blank -%}
+                    <bundle-cart-item data-added="false" class="hidden pt-4" data-id="{{ bundle_product.id }}">
+                        {%- liquid
+                        assign current_variant = bundle_product.selected_or_first_available_variant
+                        assign current_selling_plan_allocation = bundle_product.selected_selling_plan_allocation
+                        if current_selling_plan_allocation == nil and current_variant.selling_plan_allocations.size > 0
+                            assign current_selling_plan_allocation = current_variant.selling_plan_allocations | first
+                        endif
+                        assign offer = current_selling_plan_allocation | default: current_variant -%}
+                        <product-form>
+                        {% form 'product', bundle_product, data-product-form: '', data-product-handle: bundle_product.handle %}
+                            <div class="flex flex-wrap items-center mb-2">
+                                <h2 class="text-sm">{{ bundle_product.title }}</h2>
+                            </div>
+                            <div class="flex flex-wrap items-center mb-2">
+                                <div class="w-1/2">
+                                    <div class="heading">
+                                        <div data-price-wrapper>
+                                            <span data-product-price class="text-sm">
+                                            {{ offer.price | money }}</span>
+                                            <span {% unless offer.compare_at_price_max > offer.price %}style="display: none;"{% endunless %} class="visually-hidden" data-compare-text>{{ 'products.product.regular_price' | t }}</span>
+                                            <s class="[ text-xs text-red-600 ]" data-product-compare-price>
+                                            {% if offer.compare_at_price > offer.price %}
+                                                {{ offer.compare_at_price | money }}
+                                            {% endif %}
+                                            </s>
+                                        </div>
+                                    </div>
+                                </div>
+                                {%- if settings.show_in_stock -%}
+                                <div class="w-1/2">
+                                    <div class="text-right" data-product-stock-notice>
+                                    {%- if current_variant.inventory_quantity > 0 -%}
+                                        {%- if settings.low_stock_warning -%}
+                                            {%- assign threshold = settings.low_stock_threshold | plus: 0 -%}
+                                            {%- if current_variant.inventory_quantity <= threshold -%}
+                                                <p class="font-bold text-orange-500">{{ 'products.product.low_in_stock' | t: amount: current_variant.inventory_quantity }}</p>
+                                            {%- else -%}
+                                                <p class="font-bold text-green-500">{{ 'products.product.in_stock' | t }}</p>
+                                            {%- endif -%}
+                                        {%- else -%}
+                                            <p class="font-bold text-green-500">{{ 'products.product.in_stock' | t }}</p>
+                                        {%- endif -%}
+                                    {%- else -%}
+                                        {%- if current_variant.available -%}
+                                            <p class="font-bold text-green-500">{{ 'products.product.in_stock' | t }}</p>
+                                        {%- else -%}
+                                            <p class="font-bold text-red-500">{{ 'products.product.sold_out' | t }}</p>
+                                        {%- endif -%}
+                                    {%- endif -%}
+                                    </div>
+                                </div>
+                                {%- endif -%}
+                            </div>
+                        
+                            {%- unless bundle_product.has_only_default_variant -%}
+                            <div class="flex flex-wrap items-end -mx-3">
+                                {%- for option in bundle_product.options_with_values -%}
+                                <div class="w-full lg:w-1/2 mb-2 px-3">
+                                    <label class="block uppercase tracking-wide text-xs font-bold mb-2" for="Option{{ option.position }}">{{ option.name }}</label>
+                                    <div class="inline-block relative w-full selector-wrapper js">
+                                        <select class="block appearance-none w-full bg-white border border-color px-2 py-2 pr-8 leading-tight focus:outline-none focus:shadow-outline text-base"
+                                            id="Option{{ option.position }}"
+                                            name="options[{{ option.name | escape }}]"
+                                            data-option-selector>
+                                            {% for value in option.values %}
+                                            <option value="{{ value | escape }}"{% if option.selected_value == value %}selected="selected"{% endif %}>
+                                                {{ value }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 ">
+                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                {%- endfor -%}
+                            </div>
+                            {%- endunless -%}
+                        
+                            {%- liquid
+                                assign has_variant_metafield = false
+                                for variant in bundle_product.variants
+                                    assign package_details = variant.metafields.recharge.package_details
+                                    if package_details != blank
+                                        assign has_variant_metafield = true
+                                    endif
+                                endfor -%}
+                                {%- if has_variant_metafield -%}
+                                {%- assign product_form_meta_bg = settings.product_form_meta_bg -%}
+                                {%- assign product_form_meta_color = settings.product_form_meta_color -%}
+                            <div class="product-single__variant-metafields" data-metafields-container>
+                            {%- for variant in bundle_product.variants -%}
+                                {%- assign package_details = variant.metafields.recharge.package_details -%}
+                                {%- unless package_details == blank -%}
+                                <p style="background-color: {{ product_form_meta_bg }}; color: {{ product_form_meta_color }};" class="{% unless bundle_product.selected_or_first_available_variant.id == variant.id %}hidden{% endunless %} block text-sm py-2 px-4 mb-4 font-bold" data-variant-metafield="{{ variant.id }}">{{ package_details }}</p>
+                                {%- endunless -%}
+                            {%- endfor -%}
+                            </div>
+                            {%- endif -%}
+                        
+                            {%- if bundle_product.selling_plan_groups.size > 0 -%}
+                            <selling-plan data-product='{{ product | json }}' data-selling-plans class="block mb-4" x-data="{ purchaseType: 'subscription'}">
+                                <legend class="sr-only">Purchase options</legend>
+                                {% for group in bundle_product.selling_plan_groups %}
+                                    <!-- Checked: "bg-indigo-50 border-indigo-200 z-10", Not Checked: "border-gray-200" -->
+                                    <label :class="{ 'bg-gray-100 border-indigo-200 z-10': purchaseType === 'subscription' }" @click="purchaseType = 'subscription'" class="border-gray-200 relative border border-solid p-2 flex cursor-pointer rounded-tl-md rounded-tr-md">
+                                    <input data-purchase-option-selector checked value="subscription" id="subscription" type="radio" name="purchase_option" class="h-4 w-4 mt-0.5 cursor-pointer text-indigo-600 border-gray-300 focus:ring-indigo-500" aria-labelledby="privacy-setting-1-label" aria-describedby="privacy-setting-1-description">
+                                    <div class="ml-3 flex flex-col">
+                                        <!-- Checked: "text-indigo-900", Not Checked: "text-gray-900" -->
+                                        <span class="block heading text-xs">{{ 'products.subscription.subscription' | t }}</span>
+                                        {%- assign product_onetime_subscription = bundle_product.metafields.accentuate.product_subscription_subtitle -%}
+                                        {%- unless product_onetime_subscription == blank -%}
+                                        <span x-show="purchaseType == 'subscription'" class=" block text-sm pt-2">{{ product_onetime_subscription }}</span>
+                                        {%- endunless -%}
+                                        <select :class="{ 'border-indigo-200 z-10': purchaseType === 'subscription' }" class="appearance-none mt-2 block w-full pl-3 pr-10 py-1 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white"
+                                            data-single-plan-selector
+                                            data-group-id="{{ group.id }}"
+                                            name="selling_plan">
+                                            {% for plan in group.selling_plans %}
+                                            <!-- {{ plan | json }} -->
+                                            <option value="{{ plan.id }}" {% if bundle_product.selected_selling_plan.id == plan.id %}selected="selected"{% endif %}>{{ plan.name }} - Save {{ plan.price_adjustments[0].value }}%</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% comment %} <span class=" block text-sm pt-2 font-bold">{{ 'products.subscription.subscription_sub' | t }}</span> {% endcomment %}
+                                    </div>
+                                    </label>
+                                {% endfor %}
+                        
+                                <div class="bg-white rounded-md -space-y-px">
+                                    {% unless bundle_product.requires_selling_plan %}
+                                    <!-- Checked: "bg-indigo-50 border-indigo-200 z-10", Not Checked: "border-gray-200" -->
+                                    <label :class="{ 'bg-gray-100 border-indigo-200 z-10': purchaseType === 'one_time' }" @click="purchaseType = 'one_time'" class="border-gray-200 border-solid rounded-bl-md rounded-br-md relative border p-2 flex cursor-pointer" for="oneTime">
+                                    <input data-purchase-option-selector value="one_time" type="radio" name="purchase_option" id="oneTime" class="h-4 w-4 mt-0.5 cursor-pointer text-indigo-600 border-gray-300 focus:ring-indigo-500" aria-labelledby="privacy-setting-0-label" aria-describedby="privacy-setting-0-description">
+                                    <div class="ml-3 flex flex-col">
+                                        <!-- Checked: "text-indigo-900", Not Checked: "text-gray-900" -->
+                                        <span class="block heading text-xs">{{ 'products.subscription.one_time' | t }}</span>
+                                        <!-- Checked: "text-indigo-700", Not Checked: "text-gray-500" -->
+                                        {%- assign product_onetime_subtitle = bundle_product.metafields.accentuate.product_onetime_subtitle -%}
+                                        {%- assign one_time_sub = 'products.subscription.one_time_sub' | t -%}
+                                        {%- unless product_onetime_subtitle == blank -%}
+                                        <span x-show="purchaseType == 'one_time'" class=" block text-sm pt-2">{{ product_onetime_subtitle }}</span>
+                                        {%- endunless -%}
+                                        {%- unless one_time_sub == blank -%}
+                                        <span class=" block text-sm pt-2 font-bold">{{ 'products.subscription.one_time_sub' | t }}</span>
+                                        {%- endunless -%}
+                                    </div>
+                                    </label>
+                                    {% endunless %}
+                        
+                                </div>
+                            </selling-plan>
+                            {%- endif -%}
+                        
+                            <select name="id" data-productid="{{ bundle_product.id }}" class="no-js hidden" data-product-select>
+                                {% for variant in bundle_product.variants %}
+                                    <option {% if variant == current_variant %}selected="selected"{% endif %}
+                                    {% unless variant.available %}disabled="disabled"{% endunless %}
+                                    value="{{ variant.id }}">
+                                    {{ variant.title }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        
+                            <div class="flex flex-wrap justify-center -mx-3 mb-4">
+                                <div class="w-1/2 px-3">
+                                    <label class="sr-only" for="quantity">{{ 'products.product.quantity' | t }}</label>
+                                    <div class="inline-block relative">
+                                        <div x-data="{ count: 1 }" class="flex border border-solid border-gray-200">
+                                            <button type="button" x-on:click="if( count > 1 ){ count-- }" class="ajax-qty__btn btn btn--minus [ w-8 py-1 leading-tight ]">-</button>
+                                            <input x-model="count" type="text" id="Quantity" name="quantity" class="ajax-qty__input [ text-center w-8 py-1 leading-tight ]">
+                                            <button type="button" x-on:click="count++" class="ajax-qty__btn btn btn--minus [ w-8 py-1 leading-tight ]">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-1/2 px-3 flex justify-end">
+                                    <button data-remove-item class="underline appearance-none text-xs" type="button">Remove</button>
+                                </div>
+                            </div>
+
+                        {%- endform -%}
+                        </product-form>
+                    </bundle-cart-item>
+                    {%- endunless -%}
+                    {%- endif -%}
+                {%- endfor -%}
+                </div>
+
+                <button class="block md:hidden" x-on:click="itemsHidden = ! itemsHidden">
+                    <span x-show="itemsHidden"><span class="inline-block">{%- render 'icon-plus' with height: 10, width: 10 -%}</span> Show Items</span>
+                    <span x-cloak x-show="!itemsHidden"><span class="inline-block">{%- render 'icon-minus' with height: 10, width: 10 -%}</span> Hide Items</span>
+                </button>
+
+                <div class="w-full pt-4 pb-0 border-t border-solid border-color">
+                    <h3 class="text-sm">Total Bundle Price<br/><span data-total-price>{{ 0000 | money_with_currency }}</span></h3>
+                    <button class="btn primary-button p-4 leading-tight mt-4" data-submit-bundle>
+                        Create Bundle
+                    </button>
+                </div>
+            </bundle-cart-items>
+        </div>    
+    </div>
+</section>
+
+{%- if settings.development_mode -%}
+<script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'bundle.js' | asset_url }}" defer="defer"></script>
+{%- else -%}
+<script src="{{ 'product-form.min.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'bundle.min.js' | asset_url }}" defer="defer"></script>
+{%- endif -%}
+
+{% schema %}
+{
+    "name": "Bundle",
+    "settings": [
+
+    ],
+    "blocks": [
+        {
+            "type": "content",
+            "name": "Content",
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "heading",
+                    "label": "Heading"
+                },
+                {
+                    "type": "textarea",
+                    "id": "content",
+                    "label": "Content"
+                }
+            ]
+        },
+        {
+            "type": "product",
+            "name": "Product",
+            "settings": [
+                {
+                    "type": "product",
+                    "id": "bundle_product",
+                    "label": "Product"
+                }
+            ]
+        }
+    ],
+    "presets": [
+        {
+            "name": "Bundle",
+            "category": "Product"
+        }
+    ]
+}
+{% endschema %}

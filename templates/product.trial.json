@@ -1,0 +1,96 @@
+{
+  "wrapper": "div#div_id.div_class[attribute-one=value]",
+  "sections": {
+    "main": {
+      "type": "main-product-trial",
+      "blocks": {
+        "cc727988-de8a-4956-9260-68bbce34f88b": {
+          "type": "product_title",
+          "settings": {
+          }
+        },
+        "e1fb68d6-80c5-4b5c-907f-2ede94374058": {
+          "type": "product_price",
+          "settings": {
+          }
+        },
+        "e65c6568-1b6e-487a-81f3-f29098c9830d": {
+          "type": "variant_selectors",
+          "settings": {
+          }
+        },
+        "5d974378-cda2-4954-b0da-06555a2b46b0": {
+          "type": "add_to_cart",
+          "settings": {
+          }
+        }
+      },
+      "block_order": [
+        "cc727988-de8a-4956-9260-68bbce34f88b",
+        "e1fb68d6-80c5-4b5c-907f-2ede94374058",
+        "e65c6568-1b6e-487a-81f3-f29098c9830d",
+        "5d974378-cda2-4954-b0da-06555a2b46b0"
+      ],
+      "settings": {
+        "show_breadcrumbs": false,
+        "show_share_buttons": true,
+        "trial_tag": ""
+      }
+    },
+    "accordions": {
+      "type": "product-accordions",
+      "disabled": true,
+      "settings": {
+        "section_spacing_top": "mt-4",
+        "section_spacing_bottom": "mb-4",
+        "background_color": "#FEFEFE"
+      }
+    },
+    "reviews": {
+      "type": "product-reviews",
+      "disabled": true,
+      "settings": {
+        "section_heading": "",
+        "section_spacing_top": "mt-4",
+        "section_spacing_bottom": "mb-4",
+        "background_color": "#FEFEFE"
+      }
+    },
+    "tabbed-features": {
+      "type": "product-tabbed-features",
+      "disabled": true,
+      "settings": {
+        "section_heading": "",
+        "section_intro": ""
+      }
+    },
+    "alternating-content": {
+      "type": "product-alternating-content",
+      "disabled": true,
+      "settings": {
+        "background_color": "#FEFEFE",
+        "section_spacing_top": "mt-4",
+        "section_spacing_bottom": "mb-4",
+        "section_heading": "",
+        "section_description": ""
+      }
+    },
+    "recommendations": {
+      "type": "product-recommendations",
+      "settings": {
+        "total_products": 8,
+        "products_desktop": "lg:w-1\/4",
+        "products_tablet": "md:w-1\/3",
+        "products_mobile": "w-1\/2"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "accordions",
+    "reviews",
+    "tabbed-features",
+    "alternating-content",
+    "recommendations"
+  ]
+}
