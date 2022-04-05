@@ -1,0 +1,129 @@
+{
+  "current": {
+    "sections": {
+      "promo-bar": {
+        "type": "promo-bar",
+        "settings": {
+          "show_promo_bar": true,
+          "show_on_mobile": true,
+          "show_on_desktop": true,
+          "promo_link": "",
+          "promo_content": "",
+          "content_alignment": "center",
+          "font_size": 12,
+          "background_color": "#000000",
+          "font_color": "#FFFFFF"
+        }
+      },
+      "header": {
+        "type": "header",
+        "blocks": {
+          "586828f6-b0a1-403c-b176-4a2f49f5496b": {
+            "type": "mega_menu_image",
+            "settings": {
+              "menu_link": "shopify:\/\/collections",
+              "column_width": 25,
+              "image": "shopify:\/\/shop_images\/web_Vir4.jpg",
+              "image_height": "50",
+              "image_link": "shopify:\/\/collections\/bedroom-chair",
+              "image_heading": "SHOP"
+            }
+          },
+          "a980709b-a233-48d6-bb82-5b6c6fc5df4a": {
+            "type": "mega_menu_image",
+            "settings": {
+              "menu_link": "shopify:\/\/collections\/baking-chocolate",
+              "column_width": 25,
+              "image": "shopify:\/\/shop_images\/house-in-provence-1.jpg",
+              "image_height": "50px",
+              "image_link": "",
+              "image_heading": ""
+            }
+          }
+        },
+        "block_order": [
+          "586828f6-b0a1-403c-b176-4a2f49f5496b",
+          "a980709b-a233-48d6-bb82-5b6c6fc5df4a"
+        ],
+        "settings": {
+          "contain": false,
+          "header_style": "two",
+          "logo_max_width_mobile": 120,
+          "logo_max_width_desktop": 200,
+          "main_linklist": "",
+          "background_color": "#FFFFFF",
+          "menu_link_color": "#000000",
+          "menu_link_color_hover": "#999999",
+          "show_secondary_nav": true,
+          "secondary_nav": "main-menu",
+          "account_type": "icon",
+          "show_currency_selector": true
+        }
+      },
+      "drawer-mobile-menu": {
+        "type": "drawer-mobile-menu",
+        "settings": {
+          "tab_one": "",
+          "tab_one_menu": "",
+          "tab_two": "",
+          "tab_two_menu": "",
+          "show_footer_menu": true,
+          "show_account_link": true,
+          "show_search_link": false,
+          "show_phone_number": true,
+          "show_email": true
+        }
+      },
+      "animated-benefit-bar": {
+        "type": "animated-benefit-bar",
+        "settings": {
+          "show_benefit": false,
+          "make_sticky": false,
+          "home_page_only": true,
+          "background_color": "#000000",
+          "animation_delay": "4",
+          "bar_height_mobile": 25,
+          "bar_height_desktop": 25,
+          "font_color": "#000000",
+          "font_size_mobile": 8,
+          "font_size_desktop": 10
+        }
+      },
+      "benefits-bar": {
+        "type": "benefits-bar",
+        "settings": {
+          "show_benefits_bar": true,
+          "contain_section": true,
+          "cols_mobile": "1",
+          "cols_tablet": "2",
+          "cols_desktop": "3",
+          "show_arrows": true,
+          "autoplay": true,
+          "autoplay_speed": "5000"
+        }
+      },
+      "footer": {
+        "type": "footer",
+        "settings": {
+          "contain": false,
+          "show_newsletter": true,
+          "show_social_icons": true,
+          "show_shop_description": true,
+          "show_copyright": true,
+          "show_currency_selector": true,
+          "background_color": "#FFFFFF",
+          "font_color": "#000000",
+          "link_color": "#000000",
+          "link_color_hover": "#666666",
+          "separator_color": "#000000",
+          "column_width_desktop": 4,
+          "column_width_tablet": 3,
+          "column_width_mobile": 1
+        }
+      }
+    },
+    "content_for_index": [
+
+    ]
+  }
+}
