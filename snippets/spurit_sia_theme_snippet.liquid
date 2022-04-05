@@ -1,0 +1,34 @@
+<script>
+  if(typeof(Spurit) === 'undefined'){
+    var Spurit = {};
+  }
+  if(!Spurit.InstallmentPayments){
+    Spurit.InstallmentPayments = {};
+  }
+  if(!Spurit.InstallmentPayments.snippet){
+    Spurit.InstallmentPayments.snippet = {};
+  }
+  Spurit.InstallmentPayments.snippet.shopHash = '5f251e14020b8985132a11d144dda2d0';
+  Spurit.InstallmentPayments.snippet.productId = +'{{ product.id }}';
+  Spurit.InstallmentPayments.snippet.productPrice = +'{{ product.price }}';
+  Spurit.InstallmentPayments.snippet.productCollections = [
+      {% if product != null %}
+          {% for collection in product.collections %}
+            {{ collection.id }},
+          {% endfor %}
+      {% endif %}
+  ];
+
+
+  if (typeof(Spurit.globalSnippet) === 'undefined') {
+      Spurit.globalSnippet = {
+          shop_currency: '{{ shop.currency }}',
+          money_format: '{{ shop.money_format }}',
+          cart: {{cart | json }},
+          customer_id: '{{ customer.id }}'
+      };
+  }
+</script>
+
+    <script src="https://cdn-spurit.com/shopify-apps/installment-payments/common.js"></script>
+    <link href="https://cdn-spurit.com/shopify-apps/installment-payments/common.css" rel="stylesheet" type="text/css" media="all">
