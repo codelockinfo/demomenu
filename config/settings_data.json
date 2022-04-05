@@ -50,12 +50,12 @@
           "header_style": "two",
           "logo_max_width_mobile": 120,
           "logo_max_width_desktop": 200,
-          "main_linklist": "menu3",
+          "main_linklist": "main-menu",
           "background_color": "#FFFFFF",
           "menu_link_color": "#000000",
           "menu_link_color_hover": "#999999",
           "show_secondary_nav": true,
-          "secondary_nav": "main-menu",
+          "secondary_nav": "",
           "account_type": "icon",
           "show_currency_selector": true
         }
